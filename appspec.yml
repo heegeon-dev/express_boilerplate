@@ -1,0 +1,20 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/
+permissions:
+  - object: /home/ubuntu/
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+    mode: 777
+    type:
+      - directory
+      - file
+hooks:
+  ApplicationStart:
+    - location: scripts/start.sh
+      timeout: 3600
+      runas: ubuntu
+    

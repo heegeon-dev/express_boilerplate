@@ -1,0 +1,2484 @@
+openapi: 3.0.1
+info:
+  title: Season API
+  description: 'This is Season API '
+  contact:
+    email: gmlrjs9503@mapseacorp.com
+  version: 1.0.0
+  
+externalDocs:
+  url: 'https://dev.season.ne.kr/api/errors'
+  description: ERROR 데이터는 이 api를 참조해주세요. endpoint에 추가로 코드를 삽입하면 원하는 에러코드를 볼 수 있습니다. ex) https://www.season.ne.kr/api/errors/421
+
+servers:
+  - url: 'https://www.season.ne.kr/api'
+  - url: 'https://dev.season.ne.kr/api'
+
+tags:
+  - name: job
+    description: 채용 API
+  - name: community
+    description: 커뮤니티 API
+  - name: mypage
+    description: 마이페이지 API (/enterprise은 기업만 /personal은 개인만 )
+  - name: user
+    description: 회원 API
+  - name: admin
+    description: 관리자페이지 api
+  - name: media
+    description: 미디어 api
+  - name: talent
+    description: 인재풀 api
+
+paths:
+  /job/recruit:
+    get:
+      tags:
+        - job        
+      summary: 채용공고 목록 가져오기(페이징/검색 포함)
+      operationId: getRecruitList
+      parameters:
+        - name: tag
+          in: query
+          description: tag번호
+          schema:
+            type: integer
+            default: 0
+        - name: query
+          in: query
+          description: 검색어
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: 회원번호
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: 
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    properties:
+                      maxNum:
+                        type: integer
+                      maxPage:
+                        type: integer
+                      nowPage:
+                        type: integer
+                      recruitList:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/usercount'
+    post:
+      tags:
+        - job
+      summary: 채용공고 등록
+      operationId: createRecruit
+      requestBody: 
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                logo:
+                  type: string
+                  format: binary
+                  description: company logo image
+                recruit:
+                  type: string
+                  description: 채용공고 정보의 JSON 문자열/ 사용시 json.parse 필요함
+                  example : '{"title":"Test","company":"맵시","company_homepage":"www.naver.com","company_intro":"네이버일까 맵시일까","salary":"220만원 ~ 250만원","working_type":12,"working_place":"한국 전역,서울","overseas":"Y","work_from_home":"Y","days":"주 5일(월~금)","working_time":"오전8시30분~오후5시30분","welfare":"복지닷","how_to_apply":"E","apply_start":"2021-07-02-15","apply_end":"2021-07-30-19","inquire_phone":"01035519503","etc":"--","position":"","count":0,"responsibilities":"","requirements":"","places":"한국 전역","detail_place":"서울","inquire_email":"gmlrjs9503@naver.com","tag":4,"docs":["공통제출서류"],"how_to_recruit":"D","position_list":[{"responsibilities":"탱커!","requirements":"업숨","count":"0","position":"항해사","career":"신입","docs":[],"ship_types":"탱커","in_out":"내항"}],"state":"C"}'
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: 
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref : '#/components/schemas/recruit'
+
+  /job/recruit/{recruit_id}:
+    get:
+      tags:
+        - job
+      summary: 채용공고 불러오기
+      operationId: getRecruit
+      parameters:
+        - in: path
+          name: recruit_id
+          required: true
+          schema:
+            type: integer
+            example: 202
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/recruit'
+                    
+  /job/apply/{recruit_id}:
+    post:
+      tags:
+        - job
+      summary: 지원하기
+      operationId: apply
+      parameters:
+        - in: path
+          name: recruit_id
+          required: true
+          schema:
+            type: integer
+            example: 202
+      requestBody:
+        content: 
+          application/json:
+            schema:
+              type: object
+              properties:
+                position_id:
+                  type: integer
+                resume_id::
+                  type: integer
+                filelist:
+                  type: array
+                  items: 
+                    type: object
+                    properties:
+                      file_id:
+                        type: integer
+                      category:
+                        type: string
+                        description: 문서 종류
+                      mandatary:
+                        type: string  
+                        description: 필수서류 유무 ("Y" or "N")
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: boolean
+
+  /job/emailApply/{recruit_id}:
+    post:
+      tags:
+        - job
+      summary: 이메일 지원하기
+      operationId: emailApply
+      parameters:
+        - in: path
+          name: recruit_id
+          required: true
+          schema:
+            type: integer
+            example: 202
+      requestBody:
+        content: 
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                position_id:
+                  type: integer
+                resume_id::
+                  type: integer
+                filelist:
+                  type: array
+                  items: 
+                    type: object
+                    properties:
+                      file_id:
+                        type: integer
+                      category:
+                        type: string
+                        description: 문서 종류
+                      mandatary:
+                        type: string  
+                        description: 필수서류 유무 ("Y" or "N")
+                resumePDF:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: boolean
+                    
+  /job/randomRecruit:
+    get:
+      tags:
+        - job
+      summary: 랜덤채용공고 16개 가져오기
+      operationId: randomRecruit
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:  
+                  $ref: '#/components/schemas/recruit'
+                maxItems: 16
+  
+  /job/resume/{resume_id}:
+    get:
+      tags:
+        - job
+      summary: 이력서정보 가져오기
+      operationId: getResume
+      parameters:
+        - in: path
+          name: resume_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      resume_id:
+                        type: integer
+                      create_date:
+                        type: string
+                        format: timestamp
+                      update_date:
+                        type: string
+                        format: timestamp
+                      title:
+                        type: string
+                        description: 이력서 제목
+                      name:
+                        type: string
+                        description: 작성자 이름
+                      educations:
+                        type: array
+                        items: 
+                          type: object
+                          properties:
+                            school_type:
+                              type: string
+                              description: 학교구분
+                            name:
+                              type: string
+                              description: 학교명
+                            major:
+                              type: string
+                              description: 전공
+                            graduate_state: 
+                              type: string
+                              description: 졸업여부
+                      careers:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            career_id:
+                              type: integer
+                            resume_id:
+                              type: integer
+                            career_state:
+                              type: string
+                              description: 재직여부
+                            name:
+                              type: string
+                              description: 회사명
+                            position:
+                              type: string
+                              description: 직책
+                            working_start:
+                              type: string
+                              format: timestamp
+                              description: 시작날짜
+                            working_end:
+                              type: string
+                              format: timestamp
+                              description: 종료날짜
+                            etc:
+                              type: string
+                              description: 설명
+                      certifications:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            certification_id:
+                              type: integer
+                            resume_id:
+                              type: integer
+                            name:
+                               type: string
+                               description: 자격증명
+                            authority:
+                              type: string
+                              description: 발급기관
+                              
+  /job/recruitScrap/{recruit_id}:
+    get:
+      tags:
+        - job
+      summary: 스크랩 가져오기
+      operationId: getScrapList
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      properties:
+                        recruit_id:
+                          type: integer
+                        user_id:
+                          type: integer
+                        create_date:
+                          type: string
+                          format: timestamp
+                        state:
+                          type: string
+                          default: "C"
+    delete:
+      tags:
+        - job
+      summary: 스크랩 삭제 api
+      operationId: deleteScrap
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+
+    post:
+      tags:
+        - job
+      summary: 스크랩 생성 api
+      operationId: createScrap
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+
+  /job/tags:
+    get:
+      tags:
+        - job
+      summary: 채용공고 태그 목록 불러오기
+      operationId: getTags
+      responses:
+        '201':
+          description: success
+          content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    state:
+                      type: integer
+                    message:
+                      type: string
+                    data:
+                      type: array
+                      items:
+                        properties:
+                          tag_id:
+                            type: integer
+                          name:
+                            type: string
+
+  /job/deadlineRecruit:
+    get:
+      tags:
+        - job
+      summary: 마감임박 공고 3개 가져오기
+      operationId: getRecruitOfImpendingDeadline
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+                schema:
+                  type: object
+                  properties:
+                    state:
+                      type: integer
+                    message:
+                      type: string
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/recruit'
+
+  /job/recruit/search/page:
+    get:
+      tags:
+        - job
+      summary: 해당 채용공고의 page 찾기 
+      operationId: searchRecruitPage
+      parameters:
+        - in: query
+          name: recruit_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: 
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    properties:
+                      maxNum:
+                        type: integer
+                      maxPage:
+                        type: integer
+                      nowPage:
+                        type: integer
+                      recruitList:
+                        type: array
+                        items:
+                          $ref : '#/components/schemas/recruit'
+      
+
+  /mypage/enterprise/recruit:
+    get:
+      tags:
+        - mypage
+      summary: 올린 공고 가져오기
+      operationId: enterprise/getRecruitList
+      responses:
+         '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/recruit'
+    
+  /mypage/enterprise/{recruit_id}:
+    put:
+      tags:
+        - mypage
+      summary: 공고 수정하기
+      operationId: enterprise/updateRecruit
+      requestBody: 
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                logo:
+                  type: string
+                  format: binary
+                  description: company logo image
+                recruit:
+                  type: string
+                  description: 채용공고 정보의 JSON 문자열/ 사용시 json.parse 필요함
+                  example : '{"title":"Test","company":"맵시","company_homepage":"www.naver.com","company_intro":"네이버일까 맵시일까","salary":"220만원 ~ 250만원","working_type":12,"working_place":"한국 전역,서울","overseas":"Y","work_from_home":"Y","days":"주 5일(월~금)","working_time":"오전8시30분~오후5시30분","welfare":"복지닷","how_to_apply":"E","apply_start":"2021-07-02-15","apply_end":"2021-07-30-19","inquire_phone":"01035519503","etc":"--","position":"","count":0,"responsibilities":"","requirements":"","places":"한국 전역","detail_place":"서울","inquire_email":"gmlrjs9503@naver.com","tag":4,"docs":["공통제출서류"],"how_to_recruit":"D","position_list":[{"responsibilities":"탱커!","requirements":"업숨","count":"0","position":"항해사","career":"신입","docs":[],"ship_types":"탱커","in_out":"내항"}],"state":"C"}'
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: 
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref : '#/components/schemas/recruit'
+
+    delete:
+      tags:
+        - mypage
+      summary: 공고 삭제
+      operationId: enterprise/deleteRecruit
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+
+  /mypage/enterprise/apply:
+    get:
+      tags:
+        - mypage
+      summary: 지원자 목록 가져오기
+      operationId: enterprise/getApplyList
+      description: recruit_id, position_id 중 하나만 전달 **(position_id을 전달한 경우 포지션 별 지원자 목록 / recruit_id를 전달한 경우 공고 별 지원자 목록)**
+      parameters:
+        - in: query
+          name: position_id
+          schema:
+            type: integer
+        - in: query
+          name: recruit_id
+          schema:
+            type: integer
+        - in: query
+          name: state
+          description: 미분류 => uc,서류합격 => dpass,불합격 => fail,합격 => fpass
+          schema:
+            type: string
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items: 
+                      properties:
+                        apply_id:
+                          type: integer
+                        create_date:
+                          type: string
+                          format: timestamp
+                        recruit_id:
+                          type: integer
+                        state:
+                          type: string
+                          description: 미분류 => uc, 서류합격 => dpass, 불합격 => fail, 합격 => fpass
+                        reading:
+                          type: string
+                          decription: 읽음 => Y, 읽지않음 => N
+                        resume_id:
+                          type: integer
+                          description: 지원자 이력서
+                        position_id:
+                          type: integer
+                        apply_state:
+                          type: string
+                          desription: 지원 => C, 지원취소 => D
+                        update_date:
+                          type: string
+                          format: timestamp
+                        data_state:
+                          type: string
+                          description: 데이터 삭제 유무 ("C" or "D")
+                        reading_date:
+                          type: string
+                          description: 읽은 날짜
+                          format: timestamp
+                        resume_data:
+                          type: string
+                          description: 지원했을 때 지원자 이력서 (jsonstring 형식)
+
+  /mypage/enterprise/applicant:
+    put:
+      tags:
+        - mypage
+      summary: 지원 상태 변경
+      operationId: updateApplicantState
+      requestBody:
+        content: 
+          application/json:
+            schema:
+              type: object
+              properties:
+                position_id:
+                  type: integer
+                resume_id:
+                  type: integer
+                state:
+                  type: string
+                  description: 바꿀 state
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+
+  /mypage/enterprise/applicant/{apply_id}:
+    get:
+      tags:
+        - mypage
+      summary: 지원정보 불러오기
+      description: 지원정보 불러오고 해당 지원을 '읽음' 처리
+      parameters:
+        - in: query
+          name: apply_id
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      apply_id:
+                        type: integer
+                      create_date:
+                        type: string
+                        format: timestamp
+                      recruit_id:
+                        type: integer
+                      state:
+                        type: string
+                        description: 미분류 => uc, 서류합격 => dpass, 불합격 => fail, 합격 => fpass
+                      reading:
+                        type: string
+                        decription: 읽음 => Y, 읽지않음 => N
+                      resume_id:
+                        type: integer
+                        description: 지원자 이력서
+                      position_id:
+                        type: integer
+                      apply_state:
+                        type: string
+                        desription: 지원 => C, 지원취소 => D
+                      update_date:
+                        type: string
+                        format: timestamp
+                      data_state:
+                        type: string
+                        description: 데이터 삭제 유무 ("C" or "D")
+                      reading_date:
+                        type: string
+                        description: 읽은 날짜
+                        format: timestamp
+                      resume_data:
+                        type: string
+                        description: 지원했을 때 지원자 이력서 (jsonstring 형식)
+                      submission_docs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            sd_id:
+                              type: integer
+                            apply_id:
+                              type: integer
+                            file_id:
+                              type: integer
+                            category:
+                              type: string
+                            mandatory:
+                              type: string
+                              description: 필수 유무 (필수 => Y ,필수아님 => N)
+                            attached_files:
+                              type: object
+                              properties: 
+                                file_id:
+                                  type: integer
+                                filename:
+                                  type: string
+                                state:
+                                  type: string
+                                create_date:
+                                  type: string
+                                  format: timestamp
+                                user_id:
+                                  type: integer
+                                original_filename:
+                                  type: string
+  
+  /mypage/enterprise/announce:
+    post:
+      tags:
+        - mypage
+      summary: 발표하기 api
+      description: 발표하고 지원자에게 메일을 보낸다.
+      operationId: createAnnounce
+      requestBody:
+        content: 
+          application/json:
+            schema:
+              type: object
+              properties:
+                applies:
+                  type: array
+                  items:
+                    description: apply_id 배열
+                    type: integer
+                contents:
+                  type: string
+                  description: 발표 내용
+                state:
+                  type: string
+                  description: 발표할 상태 (서류합격 => dpass, 불합격 => fail, 합격 => fpass)
+                name:
+                  type: string
+                  description: 기업명
+                title:
+                  type: string
+                  description: 공고제목
+                position:
+                  type: string
+                  description: 모집분야명
+                recruit_id:
+                  type: integer
+                pageNum:
+                  type: integer
+                  description: 채용공고의 page 번호
+                tag:
+                  type: string
+                  description: 공고의 tag
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: boolean
+
+  /mypage/personal/resume:
+    get:
+      tags:
+        - mypage
+      summary: 이력서 목록 api
+      operationId: getResumeList
+      parameters:
+        - in: query
+          name: state
+          schema:
+            type: string
+          description: state가 없으면 ("C","T") , "D"는 삭제된 이력서, "C"는 삭제된 이력서, "T" 임시 저장된 이력서
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/resume'
+
+    post:
+      tags:
+        - mypage
+      
+
+                              
+
+
+  /admin/questions:
+    get:
+      tags:
+        - admin
+      summary: 고객센터 문의사항 불러오기
+      operationId: getQuestions
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      question_id: 
+                        type: integer
+                      title:
+                        type: string
+                      contents:
+                        type: string
+                      agreement:
+                        type: boolean
+                      create_date:
+                        type: string
+                        format: timestamp
+                      email:
+                        type: string
+                    
+  /admin/usercount:
+    get:
+      tags:
+        - admin
+      summary: 회원수 가져오기
+      operationId: getUserCount
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/usercount'
+                        
+  /admin/recruit/search:
+    get:
+      tags:
+        - admin
+      summary: 공고검색
+      operationId: search recruits
+      parameters:
+        - in: query
+          name: query
+          schema:
+            type: string
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      question_id: 
+                        type: integer
+                      title:
+                        type: string
+                      contents:
+                        type: string
+                      agreement:
+                        type: boolean
+                      create_date:
+                        type: string
+                        format: timestamp
+                      email:
+                        type: string
+  /admin/user/search:
+    get:
+      tags:
+        - admin
+      summary: 회원검색
+      operationId: search user
+      parameters:
+        - in: query
+          name: query
+          schema:
+            type: string
+        - in: query
+          name: pageNum
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      maxPage: 
+                        type: integer
+                      userList:
+                        $ref: "#/components/schemas/userList"
+                    
+  /admin/payRecruit:
+    post:
+      tags:
+        - admin
+      summary: 광고 공고 변경
+      operationId: updatePayRecruits
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            example: topclass or special
+          
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recruits_id: 
+                  type: array
+                  items: 
+                    type: integer
+                    example: [0,1,2,3]
+                  maxItems: 4
+                
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:  
+                      $ref: '#/components/schemas/recruit'
+  
+  /admin/recruit/{recruit_id}:
+    put:
+      tags:
+        - admin
+      summary: 관리자 공고 변경
+      operationId: updateRecruitByAdmin
+      parameters:
+        - in: path
+          required: true
+          name: recruit_id
+          schema:
+            type: integer
+          
+      requestBody: 
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                logo:
+                  type: string
+                  format: binary
+                  description: company logo image
+                recruit:
+                  type: string
+                  description: 채용공고 정보의 JSON 문자열/ 사용시 json.parse 필요함
+                  example : '{"title":"Test","company":"맵시","company_homepage":"www.naver.com","company_intro":"네이버일까 맵시일까","salary":"220만원 ~ 250만원","working_type":12,"working_place":"한국 전역,서울","overseas":"Y","work_from_home":"Y","days":"주 5일(월~금)","working_time":"오전8시30분~오후5시30분","welfare":"복지닷","how_to_apply":"E","apply_start":"2021-07-02-15","apply_end":"2021-07-30-19","inquire_phone":"01035519503","etc":"--","position":"","count":0,"responsibilities":"","requirements":"","places":"한국 전역","detail_place":"서울","inquire_email":"gmlrjs9503@naver.com","tag":4,"docs":["공통제출서류"],"how_to_recruit":"D","position_list":[{"responsibilities":"탱커!","requirements":"업숨","count":"0","position":"항해사","career":"신입","docs":[],"ship_types":"탱커","in_out":"내항"}],"state":"C"}'
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: integer
+
+  /admin/recruit/{recruit_id}/{state}:
+    put:
+      tags:
+        - admin
+      summary: 관리자 공고 상태 변경 (state를 변경하여 삭제or마감)
+      operationId: updateRecruitStateByAdmin
+      parameters:
+        - in: path
+          required: true
+          name: recruit_id
+          schema:
+            type: integer
+        - in: path
+          required: true
+          name: state
+          schema:
+            type: string
+  
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: integer
+            
+  /admin/user:
+    put:
+      tags:
+        - admin
+      summary: 회원 상태 변경 (state변경으로 탈퇴/유지)
+      operationId: updateUserState
+
+      requestBody: 
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user: 
+                  $ref: '#/components/schemas/userstate'
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: integer
+                    
+  /admin/user/tempPassword:
+    put:
+      tags:
+        - admin
+      summary: 임시비밀번호 발급
+      operationId: updateTempPassword
+
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                email: 
+                  type: string
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: string
+  
+  /admin/question/response:
+    put:
+      tags:
+        - admin
+      summary: 문의사항 답변여부 변경
+      operationId: updateQuestionResponse
+
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question_id:
+                  type: integer
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: integer
+                    
+  
+  /admin/recruit/date:
+    put:
+      tags:
+        - admin
+      summary: 공고 날짜 변경
+      operationId: updateRecruitDates
+
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recruit_id:
+                  type: integer
+                create_date:
+                  type: string
+                  format: timestamp
+                  example: "2021-10-11"
+                apply_end:
+                  type: string
+                  format: timestamp
+                  example: "2021-10-11"
+                apply_start:
+                  type: string
+                  format: timestamp
+                  example: "2021-10-11"                  
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: integer
+
+  /admin/media/homeimage:
+    put:
+      tags:
+        - admin
+      summary: 홈이미지 변경
+      operationId: changeHomeImages
+      requestBody:
+        content:
+          multipart/form-data:
+              schema:
+                properties:
+                  homeimage:
+                    type: string
+                    format: binary
+                    description: home image               
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: boolean
+                    
+                    
+  /admin/media/landingimage:
+    put:
+      tags:
+        - admin
+      summary: 홈이미지 변경
+      operationId: changeLandingImages
+      requestBody:
+        content:
+          multipart/form-data:
+              schema:
+                properties:
+                  landingimage:
+                    type: string
+                    format: binary
+                    description: landing image               
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: boolean
+                    
+  /media/home/homeimage:
+    get:
+      tags:
+        - media
+      summary: 홈이미지
+      operationId: getHomeImage
+      responses:
+        '200':
+          description: success
+          content:
+            image/*:
+              schema: 
+               type: string
+               format: binary
+        
+  /media/home/landingimage:
+    get:
+      tags:
+        - media
+      summary: 랜딩페이지 이미지 가져오기
+      operationId: getLandingImage
+      responses:
+        '200':
+          description: success
+          content:
+            image/*:
+              schema: 
+               type: string
+               format: binary
+               
+  /talent/talents:
+    get:
+      tags:
+        - talent
+      summary: 인재 등록리스트 가져오기
+      operationId: getTalentList
+      parameters:
+        - name: jobs
+          in: query
+          description: 선호업종
+          schema:
+            type: array
+            example: [1,2]
+            items:
+              type: integer
+            
+        - name: work_type
+          in: query
+          description: 근무형태
+          schema:
+            type: array
+            example: [1,2]
+            items:
+              type: integer
+        - name: pay
+          in: query
+          description: 선호급여 
+          schema:
+            type: array
+            example: [1,2]
+            items:
+              type: integer
+        - name: gender
+          in: query
+          description: 성별 M/F
+          schema:
+            type: array
+            example: ["M","F"]
+            items:
+              type: string
+        - name: place
+          in: query
+          description: 선호지역
+          schema:
+            type: array
+            example: [1,2]
+            items:
+              type: integer
+        - name: sort
+          in: query
+          description: 정렬방법 ( 업데이트순 "update"/ 높은 응답순 "response"/ 스크랩 많은 순 "scrap")
+          schema:
+            type: string
+            example: "update"
+        - name: certificated
+          in: query
+          description: 인증회원만 보기
+          schema:
+            type: boolean
+            example: false
+            default: false
+        - name: scraped
+          in: query
+          description: 스크랩한 인재만 보기
+          schema:
+            type: boolean
+            example: false
+            default: false
+        - name: pagenum
+          in: query
+          description: 불러올 page번호 (0번부터 시작)
+          schema:
+            type: integer
+            example: 0
+            default: 0
+        - name: user_id
+          in: query
+          description: 유저번호 (로그인시에만 전달)
+          schema:
+            type: integer
+            example: 0
+        
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      maxPageNum:
+                        type: integer
+                        description: 전체 페이지 수
+                        example: 4
+                      nowPage:
+                        type: integer
+                        description: 현재 페이지 번호(0번부터 시작)
+                        example: 2
+                      talentList:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            user_id:
+                              type: integer
+                            email:
+                              type: string
+                            phone:
+                              type: string
+                            scrapCnt:
+                              type: integer
+                              description: 스크랩 수 (스크랩 정렬일때만)
+                            responseRatio:
+                              type: number
+                              description: 응답비율 (응답비율 정렬일때만)
+                              
+                            talent_info: 
+                              type: object
+                              properties:
+                                open:
+                                  type: string
+                                  example: "Y"
+                                  description: 정보공개인재 여부
+                                certificated:
+                                  type: string
+                                  example: "Y"
+                                  description: 채결인재 여부
+                            talent_scraps:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  eu_id:
+                                    type: integer
+                                    description: 스크랩한 기업회원
+                                  pu_id:
+                                    type: integer
+                                    description: 스크랩된 개인회원
+                                  update_date:
+                                    type: string
+                                    format: timestamp
+                                  create_date:
+                                    type: string
+                                    format: timestamp
+                                  state:
+                                    type: string
+                                    description: C=스크랩 D=No스크랩
+                            resumes:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  resume_id:
+                                    type: integer
+                                  create_date:
+                                    type: string
+                                    format: timestamp
+                                  update_date:
+                                    type: string
+                                    format: timestamp
+                                  title:
+                                    type: string
+                                    description: 이력서 제목
+                                  name:
+                                    type: string
+                                    description: 작성자 이름
+                                  educations:
+                                    type: array
+                                    items: 
+                                      type: object
+                                      properties:
+                                        school_type:
+                                          type: string
+                                          description: 학교구분
+                                        name:
+                                          type: string
+                                          description: 학교명
+                                        major:
+                                          type: string
+                                          description: 전공
+                                        graduate_state: 
+                                          type: string
+                                          description: 졸업여부
+                                  careers:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        career_id:
+                                          type: integer
+                                        resume_id:
+                                          type: integer
+                                        career_state:
+                                          type: string
+                                          description: 재직여부
+                                        name:
+                                          type: string
+                                          description: 회사명
+                                        position:
+                                          type: string
+                                          description: 직책
+                                        working_start:
+                                          type: string
+                                          format: timestamp
+                                          description: 시작날짜
+                                        working_end:
+                                          type: string
+                                          format: timestamp
+                                          description: 종료날짜
+                                        etc:
+                                          type: string
+                                          description: 설명
+                                  certifications:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        certification_id:
+                                          type: integer
+                                        resume_id:
+                                          type: integer
+                                        name:
+                                          type: string
+                                          description: 자격증명
+                                        authority:
+                                          type: string
+                                          description: 발급기관
+                                  scraped:
+                                    type: boolean
+                                    description: 스크랩여부
+  /talent/scrap/{user_id}:
+    put:
+      tags:
+          - talent
+      summary: 스크랩 변경하기 (C->D or D->C) (기업회원)
+      operationId: updateScrap
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+            example: 202
+            description: 스크랩할 인재의 user_id
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: boolean
+                    
+  /talent/filters:
+    get:
+      tags:
+        - talent
+      summary: 필터 가져오기
+      operationId: getFilters
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        job_id:
+                          type: integer
+                        name:
+                          type: string
+                  pay:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pay_id:
+                          type: integer
+                        amount:
+                          type: string
+                  work_type:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        wt_id:
+                          type: integer
+                        name:
+                          type: string
+                  place:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        place_id:
+                          type: integer
+                        name:
+                          type: string
+                        
+  /talent/folders:
+    get:
+      tags:
+       - talent
+      summary: 폴더리스트 가져오기(기업회원)
+      operationId: getFolders
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        folder_id:
+                          type: integer
+                        name:
+                          type: string
+                        create_date:
+                          type: string
+                          format: timestamp
+                        update_date:
+                          type: string
+                          format: timestamp
+                        user_id:
+                          type: integer
+                          description: 소유 유저id
+                          
+    put:
+      tags:
+      - talent
+      summary: 폴더리스트 변경하기(기업회원)
+      operationId: updateFolders
+      requestBody: 
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                update:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      folder_id:
+                        type: integer
+                      name:
+                        type: string
+                create:
+                  type: array
+                  items:
+                    type: string
+                    description: 추가할 폴더의 이름
+                remove:
+                  type: array
+                  items:
+                    type: integer
+                    description: 삭제할 폴더의 id
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        folder_id:
+                          type: integer
+                        name:
+                          type: string
+                        create_date:
+                          type: string
+                          format: timestamp
+                        update_date:
+                          type: string
+                          format: timestamp
+                        user_id:
+                          type: integer
+                          description: 소유 유저id
+                        
+            
+    
+  /talent/requests:
+    get:
+      tags:
+        - talent
+      summary: 요청내역 가져오기(기업회원)
+      operationId: getTalentRequest
+      parameters:
+        - name: folder_id
+          in: query
+          description: 폴더번호(default는 전체 폴더)
+          schema:
+            type: integer
+        - name: isAccepted
+          in: query
+          description: 수락유무(Y/N)
+          schema:
+            type: string
+            default: N
+        - name: pageNum
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          schema:
+            type: string
+            description: 최신순=DESC / 오래된 순=ASC
+            default: DESC
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      maxPageNum:
+                        type: integer
+                        description: 전체 페이지 수
+                        example: 4
+                      nowPage:
+                        type: integer
+                        description: 현재 페이지 번호(0번부터 시작)
+                        example: 2
+                      requestList:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            request_id:
+                              type: integer
+                              description: 요청번호
+                            request_date:
+                              type: string
+                              format: timestamp
+                              description: 요청시간
+                            deadline_date:
+                              type: string
+                              format: timestamp
+                              description: 요청마감시간
+                            contents:
+                              type: string
+                              description: 요청내용
+                            state:
+                              type: string
+                              description: 요청상태 (대기=W/수락=A/거절=R/만료=E)
+                            response_user:
+                              type: integer
+                              description: 요청받은 개인회원
+                            resume_data:
+                              type: string
+                              description: (요청 당시의)이력서의 json string
+                            folder_id:
+                              type: string
+                              description: 저장된 폴더의 id
+                            response_date:
+                              type: string
+                              format: timestamp
+                              description: 답변한 시간
+                            
+    put:
+      tags:
+       - talent
+      summary: 폴더이동하기/공개요청 폴더변경
+      operationId: moveFolder
+      requestBody: 
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                move:
+                  description: 이동할 요청의 id 배열 (request_id)
+                  type: array
+                  items:
+                    type: integer
+                dest:
+                  description: 이동할 폴더의 id
+                  type: integer
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: boolean
+                    
+  /talent/request/{request_id}:
+    get:
+      tags:
+        - talent
+      summary: 요청불러오기(인재상세)
+      operationId: getRequest
+      parameters:
+        - in: path
+          name: request_id
+          required: true
+          description: 불러올 요청의 id
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      request_id:
+                        type: integer
+                      request_date:
+                        type: string
+                        format: timestamp
+                      deadline_date:
+                        type: string
+                        format: timestamp
+                        description: 요청마감날짜
+                      contents:
+                        type: string
+                        description: 내용
+                      state:
+                        type: string
+                        description: W=대기 A=수락 R=거절 E=만료
+                      response_user:
+                        type: integer
+                        description: 요청받은 인재의 id
+                      resume_date:
+                        type: string
+                        description: 요청받을 당시 resume (jsonstring)
+                      folder_id:
+                        type: integer
+                        description: 요청한 사람의 folder_id
+                      response_date:
+                        type: string
+                        format: timestamp
+                      user_info:
+                        type: object
+                        properties:
+                          user_info:
+                            type: integer
+                          talent_scraps:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                eu_id:
+                                  type: integer
+                                pu_id:
+                                  type: integer
+                                create_date:
+                                  type: string
+                                  format: timestamp
+                                update_date:
+                                  type: string
+                                  format: timestamp
+                                state:
+                                  type: string
+                      resume:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            resume_id:
+                              type: integer
+                            create_date:
+                              type: string
+                              format: timestamp
+                            update_date:
+                              type: string
+                              format: timestamp
+                            title:
+                              type: string
+                              description: 이력서 제목
+                            name:
+                              type: string
+                              description: 작성자 이름
+                            educations:
+                              type: array
+                              items: 
+                                type: object
+                                properties:
+                                  school_type:
+                                    type: string
+                                    description: 학교구분
+                                  name:
+                                    type: string
+                                    description: 학교명
+                                  major:
+                                    type: string
+                                    description: 전공
+                                  graduate_state: 
+                                    type: string
+                                    description: 졸업여부
+                            careers:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  career_id:
+                                    type: integer
+                                  resume_id:
+                                    type: integer
+                                  career_state:
+                                    type: string
+                                    description: 재직여부
+                                  name:
+                                    type: string
+                                    description: 회사명
+                                  position:
+                                    type: string
+                                    description: 직책
+                                  working_start:
+                                    type: string
+                                    format: timestamp
+                                    description: 시작날짜
+                                  working_end:
+                                    type: string
+                                    format: timestamp
+                                    description: 종료날짜
+                                  etc:
+                                    type: string
+                                    description: 설명
+                            certifications:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  certification_id:
+                                    type: integer
+                                  resume_id:
+                                    type: integer
+                                  name:
+                                     type: string
+                                     description: 자격증명
+                                  authority:
+                                    type: string
+                                    description: 발급기관
+  
+  /talent/request/count:
+    get:
+      tags:
+       - talent
+      summary: 요청 수 가져오기
+      operationId: getRecruitCount
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: integer
+                    
+  /talent/talentinfo/{response_user_id}:
+    get:
+      tags:
+        - talent
+      summary: 인재정보 가져오기
+      description: 정보공개가 승락되지 않은 인재(정보공개 거부및 대기)의 개인정보는 볼 수 없음 (개인정보 = 이름, 이메일, 전화번호, 프로필사진)
+      operationId: getTalentInfo
+      parameters:
+        - in: path
+          name: response_user_id
+          required: true
+          description: 불러올 요청의 id
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Request was success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: integer
+                  message:
+                    type: string
+                  # data:
+                    
+                        
+                      
+                      
+    # post:
+    #   tags:
+    #   - talent
+    #   summary: 폴더이동하기 / 공개요청폴더변경
+    #   operationId: updateFolder
+    #   requestBody:
+    #     content:
+    #       multipart/form-data:
+    #           schema:
+    #             properties:
+    #               update:
+    #                 type: array
+    #                 items:
+    #                   type: object
+    #                   properties:
+    #                     folder_id:
+    #                       type: integer
+    #               remove:
+    #                 type: array
+    #                 items:
+    #                   type: integer
+    #                 description: folder_id 배열
+    #               create:
+    #                 type: array
+    #                 items:
+    #                   type: string
+    #                 description: 폴더이름 배열
+                      
+    #   responses:
+    #     '201':
+    #       description: Request was success
+    #       content:
+    #         application/json:
+    #           schema:
+    #             type: object
+    #             properties:
+    #               state:
+    #                 type: integer
+    #               message:
+    #                 type: string
+    #               data:
+    #                 type: array
+    #                 items:
+    #                   type: object
+    #                   properties:
+    #                     folder_id:
+    #                       type: integer
+    #                     name:
+    #                       type: string
+    #                     create_date:
+    #                       type: string
+    #                       format: date
+    #                     update_date:
+    #                       type: string
+    #                       format: date
+    #                     user_id:
+    #                       type: integer
+    #                       description: 소유 회원 id
+
+        
+                            
+                    
+                      
+            
+components:
+  # responses:
+  #   NotFound:
+  #     description: The specified resource was not found
+  #     content:
+  #       application/json:
+  #         schema:
+  #           $ref: '#/components/schemas/Error'
+  #   201:
+  #     description: request was successful
+  #     content:
+  #       application/json:
+  #         schema:
+  #           $ref: '#/components/schemas/Success'
+            
+  schemas:
+    Success:
+      type: object
+      properties:
+        status: 
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+        
+    Error:
+      type: object
+      properties :
+        status:
+          type: integer
+        message:
+          type: string
+        data:
+          type: string
+    
+    usercount:
+      type: "object"
+      properties:
+        total:
+          type: "integer"
+        retention:
+          $ref: "#/components/schemas/retention"
+        quite:
+          $ref: "#/components/schemas/quite"
+        admin:
+          type: "integer"
+          
+    retention:
+      type: object
+      properties:
+        all:
+          type: integer
+        P:
+          type: integer
+        E:
+          type: integer     
+          
+          
+    quite:
+      type: object
+      properties:
+        all:
+          type: integer
+        P:
+          type: integer
+        E:
+          type: integer
+          
+    userstate:
+      type: "object"
+      properties:
+        state:
+          type: "string"
+        user_id:
+          type: "integer"
+      # xml:
+      #   name: "Category"
+      
+    userList:
+      type: object
+      properties:
+        user_id: 
+          type: integer
+        email:
+          type: string
+        phone:
+          type: string
+        name:
+          type: string
+        state:
+          type: string
+        user_type:
+          type: string
+        create_date:
+          type: string
+          format: timestamp
+        maketing:
+          type: object
+          properties:
+            agreement:
+              type: string
+        enter_authentication:
+          type: object
+          properties:
+            brno:
+              type: string
+            company_name:
+              type: string
+            representative_name:
+              type: string
+            authentication:
+              type: string
+              description: 통과 = P 인증진행중 = I  실패 = F
+    resume:
+      type: object
+      properties:
+        resume_id:
+          type: integer
+        create_date:
+          type: string
+          format: timestamp
+        update_date:
+          type: string
+          format: timestamp
+        title:
+          type: string
+          description: 이력서 제목
+        name:
+          type: string
+          description: 작성자 이름
+        educations:
+          type: array
+          items: 
+            type: object
+            properties:
+              school_type:
+                type: string
+                description: 학교구분
+              name:
+                type: string
+                description: 학교명
+              major:
+                type: string
+                description: 전공
+              graduate_state: 
+                type: string
+                description: 졸업여부
+        careers:
+          type: array
+          items:
+            type: object
+            properties:
+              career_id:
+                type: integer
+              resume_id:
+                type: integer
+              career_state:
+                type: string
+                description: 재직여부
+              name:
+                type: string
+                description: 회사명
+              position:
+                type: string
+                description: 직책
+              working_start:
+                type: string
+                format: timestamp
+                description: 시작날짜
+              working_end:
+                type: string
+                format: timestamp
+                description: 종료날짜
+              etc:
+                type: string
+                description: 설명
+        certifications:
+          type: array
+          items:
+            type: object
+            properties:
+              certification_id:
+                type: integer
+              resume_id:
+                type: integer
+              name:
+                  type: string
+                  description: 자격증명
+              authority:
+                type: string
+                description: 발급기관
+    recruit:
+      type: object
+      properties:
+        recruit_id:
+          type: integer
+        user_id:
+          type: integer
+        create_date:
+          type: string
+          format: timestamp
+        update_date:
+          type: string
+          format: timestamp
+        title:
+          type: string
+          maxLength: 255
+        company:
+          type: string
+          maxLength: 255
+        company_homepage:
+          type: string
+          maxLength: 255
+        compnay_intro:
+          type: string
+          maxLength: 65535
+        salary_type:
+          type: string
+          maxLength: 31
+        salary:
+          type: string
+          maxLength: 31
+        working_type:
+          type: integer
+        welfare:
+          type: string
+          maxLength: 65535
+        how_to_apply:
+          type: string
+          maxLength: 5
+          enum:
+            - E
+            - H
+            - EH
+          description: E -> 시즌지원 / H -> 홈페이지 지원 / EH -> 시즌/홈페이지 지원
+        apply_email:
+          type: string
+          maxLength: 31
+        apply_homepage:
+          type: string
+          maxLength: 31
+        apply_start:
+          type: string
+          format: timestamp
+        apply_end:
+          type: string
+          format: timestamp
+        how_to_recruit:
+          type: string
+          maxLength: 5
+          enum :
+            - D
+            - HD
+            - AT
+          description: D -> 마감일 지정 / HD -> 채용시 마감 / AT -> 수시채용
+        documents:
+          type: string
+          maxLength: 65535
+        inquire_email:
+          type: string
+          maxLength: 255
+        inquire_phone:
+          type: string
+          maxLength: 31
+        inqurie_FAX:
+          type: string
+          maxLength: 31
+        etc:
+          type: string
+          maxLength: 65535
+        state:
+          type: string
+          maxLength: 3
+          enum :
+            - C 
+            - D 
+            - T 
+            - E 
+          description: C -> 생성 / D -> 삭제 / T -> 임시저장 / E -> 공고만료
+        logo:
+          type: string
+          maxLength: 255
+        docs:
+          type: string
+          maxLength: 255
+          description: 공통서류
+        views:
+          type: integer
+          
+          
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

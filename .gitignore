@@ -1,0 +1,7 @@
+node_modules
+package-lock.json
+*/upload/*
+!*/upload/.gitkeep
+src/constant/advertise/specialRecruit.txt
+src/constant/advertise/topclassRecruit.txt
+.vscode
